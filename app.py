@@ -1,72 +1,145 @@
 import streamlit as st
 import pandas as pd
-import altair as alt
-from datetime import date
+import random
+import plotly.express as px
 
-st.set_page_config(page_title="Consultant Intelligence Platform", layout="wide")
+# Core dataset
+consultants_data = [
+    {"Name": "Snigdha Singh", "Designation": "Project Lead I", "Expertise": "Startup Sourcing",
+     "Skills": ["Consulting", "Startup Scouting", "Research"], "Projects": ["NetApp", "Panasonic", "NASSCOM Report"],
+     "OKRs": "Drive delivery efficiency, mentor team, build tech knowledge",
+     "L&D Plan": "Coursera: AI for Everyone, McKinsey Problem Solving",
+     "Availability": "May 2025", "Current Project": "Panasonic", "Next Project": "TBD"},
 
-# Sample data
-data = [
-    ["Snigdha Singh", "Startup Sourcing", "NetApp, Panasonic, NASSCOM Report", "Management Consulting", "Delivery OKRs", "Market Sizing, Financial Projections", "Tech Certification", "5 months", "None", "Available"],
-    ["Aditya Gopalakrishnan", "Reports, Automotive", "MBRDI, NASSCOM Report, Flexera", "Management Consulting, Basic Tech", "Upskilling in Tech", "Automotive Sector Analysis", "Excel Automation", "2 months", "Next project mapped", "Not Available"],
-    ["Chirag Batra", "Japanese Clients, Emerging Tech", "Sumitomo, Marubeni, Sony", "Tech + Client Mgt", "Productivity OKRs", "Emerging Tech Research", "Data Viz Workshops", "4 months", "None", "Available"],
-    ["Gautham Savio", "Data Analysis", "Internal Tools, BD Decks", "Tech, Reports", "Delivery OKRs", "Internal Automation, Dashboards", "Python Basics", "1 month", "Next project mapped", "Not Available"],
-    ["John Doe", "Market Analysis", "Confidential", "Basic Tech", "Upskilling OKRs", "Market Sizing", "SQL Bootcamp", "2 months", "None", "Available"],
-    ["Jane Smith", "Delivery Excellence", "Process Revamp", "Mgmt Consulting", "Productivity OKRs", "Workflow Design", "AI Overview", "3 months", "Next project mapped", "Not Available"]
+    {"Name": "Aditya Gopalakrishnan", "Designation": "Project Lead I", "Expertise": "Reports, Automotive",
+     "Skills": ["Consulting", "Automotive", "Report Writing"], "Projects": ["MBRDI", "NASSCOM Report", "Flexera"],
+     "OKRs": "Delivery on Flexera, automotive insights, upskill in ML",
+     "L&D Plan": "ML for Business Leaders, Financial Forecasting (LinkedIn)",
+     "Availability": "June 2025", "Current Project": "MBRDI", "Next Project": "TBD"},
+
+    {"Name": "Chirag Batra", "Designation": "Consultant II", "Expertise": "Japanese Clients, Emerging Tech",
+     "Skills": ["Consulting", "Emerging Tech", "Client Handling"], "Projects": ["Sumitomo", "Marubeni", "Sony"],
+     "OKRs": "Improve delivery metrics, learn data storytelling",
+     "L&D Plan": "Emerging Tech Webinar Series, Communication for Impact",
+     "Availability": "April 2025", "Current Project": "Sony", "Next Project": "Marubeni"},
+
+    {"Name": "Gautham Savio", "Designation": "Senior Associate - Marketing", "Expertise": "Marketing Strategy",
+     "Skills": ["Campaigns", "Content Strategy", "Design"], "Projects": ["Internal GTM", "Employer Branding"],
+     "OKRs": "Improve internal reach, launch 2 GTM campaigns",
+     "L&D Plan": "Hubspot Certification, Canva Pro Workshop",
+     "Availability": "July 2025", "Current Project": "Employer Branding", "Next Project": "TBD"}
 ]
 
-columns = ["Name", "Expertise", "Projects", "Skills", "OKRs", "Suggested Projects", "L&D Plan", "Current Project Duration", "Next Project", "Availability"]
-df = pd.DataFrame(data, columns=columns)
+# Add dummy consultants
+names = ["John Doe", "Jane Smith", "Priya Raj", "Aarav Mehta", "Emily Chen", "Carlos Diaz"]
+designations = ["Project Lead II", "Consultant I"]
+skills_list = ["Consulting", "Strategy", "Market Sizing", "Data Cleaning", "Storyboarding", "PowerPoint", "Python"]
 
-# --- Header ---
-st.title("🚀 Consultant Intelligence Dashboard")
-st.markdown("A smart, AI-ready platform to match the **right talent** with the **right projects** at the **right time**.")
-st.markdown("---")
+for name in names:
+    consultants_data.append({
+        "Name": name,
+        "Designation": random.choice(designations),
+        "Expertise": random.choice(["Finance", "Retail", "Healthcare", "Edtech"]),
+        "Skills": random.sample(skills_list, 3),
+        "Projects": random.sample(["XYZ", "ABC", "DEF", "GHI", "JKL"], 3),
+        "OKRs": "Improve output, upskill in AI, enhance communication",
+        "L&D Plan": "Skillshare, GPT-4 Tutorials",
+        "Availability": random.choice(["April 2025", "May 2025", "June 2025"]),
+        "Current Project": random.choice(["XYZ", "ABC", "GHI"]),
+        "Next Project": "TBD"
+    })
 
-# --- Filters ---
-st.sidebar.header("🔍 Filter Consultants")
-availability = st.sidebar.selectbox("Availability", options=["All"] + df["Availability"].unique().tolist())
-skill = st.sidebar.multiselect("Skills", options=sorted(df["Skills"].unique().tolist()))
+df = pd.DataFrame(consultants_data)
 
-filtered_df = df.copy()
-if availability != "All":
-    filtered_df = filtered_df[filtered_df["Availability"] == availability]
-if skill:
-    filtered_df = filtered_df[filtered_df["Skills"].isin(skill)]
+# Streamlit config
+st.set_page_config(page_title="AI-Powered Staffing | Internal Demo", layout="wide")
+st.title("🧠 AI-Powered Internal Talent Dashboard")
 
-# --- Consultant Table ---
-st.subheader("👥 Consultant Profiles")
-st.dataframe(filtered_df, use_container_width=True)
+tabs = st.tabs(["📈 Manager View", "👤 Consultant View", "🤖 Chatbot", "🧩 HR View"])
 
-# --- Visualisation 1: Availability Status ---
-st.subheader("📊 Availability Overview")
-avail_chart = (
-    alt.Chart(df)
-    .mark_bar()
-    .encode(
-        x=alt.X("Availability", title="Status"),
-        y=alt.Y("count()", title="Consultant Count"),
-        color="Availability",
-        tooltip=["Availability", "count()"]
-    )
-    .properties(width=300, height=300)
-)
-st.altair_chart(avail_chart, use_container_width=True)
+# Manager View
+with tabs[0]:
+    st.subheader("Overview: Consultants vs Projects")
+    st.dataframe(df[["Name", "Designation", "Skills", "Current Project", "Availability", "Next Project"]])
 
-# --- Visualisation 2: Consultant Count by Expertise ---
-st.subheader("💼 Consultant Count by Expertise")
-expertise_chart = (
-    alt.Chart(df)
-    .mark_bar()
-    .encode(
-        x=alt.X("Expertise", sort="-y", title="Area of Expertise"),
-        y=alt.Y("count()", title="Consultant Count"),
-        color="Expertise",
-        tooltip=["Expertise", "count()"]
-    )
-    .properties(width=600, height=400)
-)
-st.altair_chart(expertise_chart, use_container_width=True)
+    st.subheader("Skill Distribution")
+    skill_df = df.explode("Skills")
+    skill_counts = skill_df["Skills"].value_counts().reset_index()
+    skill_counts.columns = ["Skill", "Count"]
+    fig = px.bar(skill_counts, x="Skill", y="Count", color="Skill", title="Consultant Skill Heatmap")
+    st.plotly_chart(fig, use_container_width=True)
+
+# Consultant View
+with tabs[1]:
+    st.subheader("Personalized Consultant Snapshot")
+    consultant_choice = st.selectbox("Choose your name", df["Name"].unique())
+    selected = df[df["Name"] == consultant_choice].iloc[0]
+
+    st.markdown(f"""
+    **🪪 Designation:** {selected['Designation']}  
+    **🎯 Expertise:** {selected['Expertise']}  
+    **🛠️ Skills:** {', '.join(selected['Skills'])}  
+    **📁 Projects:** {', '.join(selected['Projects'])}  
+    **📍 Availability:** {selected['Availability']}  
+    **🚧 Current Project:** {selected['Current Project']}  
+    **🔜 Next Project:** {selected['Next Project']}  
+    """)
+
+    st.markdown("**🎯 OKRs**")
+    st.success(selected["OKRs"])
+
+    st.markdown("**📚 Learning Plan**")
+    st.info(selected["L&D Plan"])
+
+# Chatbot View
+with tabs[2]:
+    st.subheader("Ask AI about your Role")
+    st.markdown("Example prompts:")
+    st.markdown("- *What’s my next project?*")
+    st.markdown("- *What are my current OKRs?*")
+    st.markdown("- *Suggest a learning plan*")
+
+    query = st.text_input("Ask a question")
+    if query and consultant_choice:
+        q = query.lower()
+        response = ""
+        if "next project" in q:
+            response = f"Your next mapped project is **{selected['Next Project']}**."
+        elif "okr" in q:
+            response = f"Your current OKRs are: **{selected['OKRs']}**."
+        elif "learning" in q or "training" in q:
+            response = f"Recommended L&D: **{selected['L&D Plan']}**."
+        elif "availability" in q:
+            response = f"You're available from **{selected['Availability']}**."
+        elif "skills" in q:
+            response = f"Your key skills are: **{', '.join(selected['Skills'])}**."
+        elif "designation" in q:
+            response = f"You're currently a **{selected['Designation']}**."
+        elif "project" in q:
+            response = f"You're on **{selected['Current Project']}**, mapped to **{selected['Next Project']}** next."
+        else:
+            response = "I'm learning! Try asking about your skills, project, or OKRs."
+
+        st.markdown(f"**💬 AI says:** {response}")
+
+# HR View
+with tabs[3]:
+    st.subheader("Hiring & Upskilling Tracker")
+    upcoming_projects = {
+        "Digital Health GTM": ["Healthcare", "Data Cleaning", "PowerPoint"],
+        "Retail Trend Analysis": ["Retail", "Market Sizing", "Consulting"],
+        "AI Startup Scouting": ["Startup Sourcing", "Storyboarding", "Python"],
+        "Japanese CX Strategy": ["Japanese Clients", "Emerging Tech", "Report Writing"]
+    }
+
+    proj = st.selectbox("Select upcoming project", list(upcoming_projects.keys()))
+    needed = upcoming_projects[proj]
+
+    st.markdown(f"**Required Skills:** {', '.join(needed)}")
+    match = df[df["Skills"].apply(lambda x: any(skill in x for skill in needed))]
+
+    st.markdown("**🧑‍💼 Matching Consultants Available:**")
+    st.dataframe(match[["Name", "Designation", "Skills", "Availability", "Current Project", "Next Project"]])
 
 # --- Footer ---
 st.markdown("---")
