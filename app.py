@@ -1,104 +1,75 @@
-# workforce-ai-demo
 import streamlit as st
 import pandas as pd
-from PIL import Image
+import altair as alt
+from datetime import date
 
-st.set_page_config(page_title="AI Workforce Portal", layout="wide")
+st.set_page_config(page_title="Consultant Intelligence Platform", layout="wide")
 
-# Load Icons (optional - can skip if deploying without local assets)
-icon_url = "https://img.icons8.com/ios-filled/50/000000/briefcase.png"
+# Sample data
+data = [
+    ["Snigdha Singh", "Startup Sourcing", "NetApp, Panasonic, NASSCOM Report", "Management Consulting", "Delivery OKRs", "Market Sizing, Financial Projections", "Tech Certification", "5 months", "None", "Available"],
+    ["Aditya Gopalakrishnan", "Reports, Automotive", "MBRDI, NASSCOM Report, Flexera", "Management Consulting, Basic Tech", "Upskilling in Tech", "Automotive Sector Analysis", "Excel Automation", "2 months", "Next project mapped", "Not Available"],
+    ["Chirag Batra", "Japanese Clients, Emerging Tech", "Sumitomo, Marubeni, Sony", "Tech + Client Mgt", "Productivity OKRs", "Emerging Tech Research", "Data Viz Workshops", "4 months", "None", "Available"],
+    ["Gautham Savio", "Data Analysis", "Internal Tools, BD Decks", "Tech, Reports", "Delivery OKRs", "Internal Automation, Dashboards", "Python Basics", "1 month", "Next project mapped", "Not Available"],
+    ["John Doe", "Market Analysis", "Confidential", "Basic Tech", "Upskilling OKRs", "Market Sizing", "SQL Bootcamp", "2 months", "None", "Available"],
+    ["Jane Smith", "Delivery Excellence", "Process Revamp", "Mgmt Consulting", "Productivity OKRs", "Workflow Design", "AI Overview", "3 months", "Next project mapped", "Not Available"]
+]
 
-# Sample Consultant Data
-consultant_data = {
-    "Name": ["Snigdha Singh", "Aditya Gopalakrishnan", "Chirag Batra", "Gautham Savio"],
-    "Skills": [
-        "Strategy, Program Mgmt, Basic Python",
-        "Delivery Mgmt, Financial Modelling, SQL",
-        "Research, Market Sizing, Power BI",
-        "Client Comms, Project Mgmt, Excel"
-    ],
-    "Current OKRs": [
-        "Improve productivity on delivery tasks, Upskill in data analysis tools",
-        "Build financial projection models, Learn automation with Python",
-        "Speed up research turnaround, Learn basic data scraping",
-        "Enhance stakeholder communication, Master Excel dashboards"
-    ],
-    "Suggested Projects": [
-        "Productivity tracker for internal teams, Market entry strategy for healthcare",
-        "Industry benchmarking analysis, Internal finance automation",
-        "Competitor deep-dive in mobility, Investor landscape mapping",
-        "Internal insights dashboard, Regulatory trends report"
-    ],
-    "L&D Plan": [
-        "Intro to Python for Consulting, Dashboarding in Excel",
-        "Finance Automation with Python, Time-to-Insight Training",
-        "Power BI Advanced, Fast Research Techniques",
-        "Storytelling with Data, Excel Tips for Client Delivery"
-    ]
-}
-df = pd.DataFrame(consultant_data)
+columns = ["Name", "Expertise", "Projects", "Skills", "OKRs", "Suggested Projects", "L&D Plan", "Current Project Duration", "Next Project", "Availability"]
+df = pd.DataFrame(data, columns=columns)
 
-# Sidebar
-st.sidebar.markdown("## 🔎 Navigation")
-section = st.sidebar.radio("Choose a section", ["🏢 Manager View", "👤 Consultant View", "💬 Chat Assistant (Mock)"])
+# --- Header ---
+st.title("🚀 Consultant Intelligence Dashboard")
+st.markdown("A smart, AI-ready platform to match the **right talent** with the **right projects** at the **right time**.")
+st.markdown("---")
 
-st.markdown(
-    """
-    <style>
-    .big-font {
-        font-size: 24px;
-        font-weight: bold;
-    }
-    .card {
-        background-color: #f9f9f9;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        margin-bottom: 20px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
+# --- Filters ---
+st.sidebar.header("🔍 Filter Consultants")
+availability = st.sidebar.selectbox("Availability", options=["All"] + df["Availability"].unique().tolist())
+skill = st.sidebar.multiselect("Skills", options=sorted(df["Skills"].unique().tolist()))
+
+filtered_df = df.copy()
+if availability != "All":
+    filtered_df = filtered_df[filtered_df["Availability"] == availability]
+if skill:
+    filtered_df = filtered_df[filtered_df["Skills"].isin(skill)]
+
+# --- Consultant Table ---
+st.subheader("👥 Consultant Profiles")
+st.dataframe(filtered_df, use_container_width=True)
+
+# --- Visualisation 1: Availability Status ---
+st.subheader("📊 Availability Overview")
+avail_chart = (
+    alt.Chart(df)
+    .mark_bar()
+    .encode(
+        x=alt.X("Availability", title="Status"),
+        y=alt.Y("count()", title="Consultant Count"),
+        color="Availability",
+        tooltip=["Availability", "count()"]
+    )
+    .properties(width=300, height=300)
 )
+st.altair_chart(avail_chart, use_container_width=True)
 
-# MANAGER VIEW
-if section == "🏢 Manager View":
-    st.markdown("<div class='big-font'>📊 Manager Dashboard</div>", unsafe_allow_html=True)
-    st.markdown("#### Overview of Consultant Pipeline and Opportunities")
-    st.dataframe(df)
+# --- Visualisation 2: Consultant Count by Expertise ---
+st.subheader("💼 Consultant Count by Expertise")
+expertise_chart = (
+    alt.Chart(df)
+    .mark_bar()
+    .encode(
+        x=alt.X("Expertise", sort="-y", title="Area of Expertise"),
+        y=alt.Y("count()", title="Consultant Count"),
+        color="Expertise",
+        tooltip=["Expertise", "count()"]
+    )
+    .properties(width=600, height=400)
+)
+st.altair_chart(expertise_chart, use_container_width=True)
 
-    st.markdown("### 🔍 Quick Stats")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Consultants Tracked", len(df))
-    with col2:
-        st.success("High priority: Upskilling + Delivery Optimization")
+# --- Footer ---
+st.markdown("---")
+st.markdown("Crafted with ❤️ by PersonaX")
 
-# CONSULTANT VIEW
-elif section == "👤 Consultant View":
-    st.markdown("<div class='big-font'>🙋 Consultant Portal</div>", unsafe_allow_html=True)
-    selected_name = st.selectbox("Select your name", df["Name"])
-    data = df[df["Name"] == selected_name].iloc[0]
-
-    st.markdown("#### 🔍 Profile Details")
-    st.markdown(f"<div class='card'><b>Skills:</b><br>{data['Skills']}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='card'><b>Current OKRs:</b><br>{data['Current OKRs']}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='card'><b>Suggested Projects:</b><br>{data['Suggested Projects']}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='card'><b>L&D Plan:</b><br>{data['L&D Plan']}</div>", unsafe_allow_html=True)
-
-# CHAT VIEW
-elif section == "💬 Chat Assistant (Mock)":
-    st.markdown("<div class='big-font'>💬 AI Assistant (Demo)</div>", unsafe_allow_html=True)
-    st.markdown("Ask questions like:")
-    st.markdown("- _Who is fit for a market sizing task?_\n- _Recommend L&D for Gautham_")
-
-    query = st.text_input("Ask something:")
-    if query:
-        st.markdown("#### 🤖 Response")
-        if "market sizing" in query.lower():
-            st.success("Chirag Batra or Snigdha Singh would be strong choices.")
-        elif "Gautham" in query and "L&D" in query:
-            st.success("Gautham’s plan: Storytelling with Data and Excel Tips for Client Delivery.")
-        else:
-            st.info("This is a mock NLP. Real AI assistant coming soon.")
 
